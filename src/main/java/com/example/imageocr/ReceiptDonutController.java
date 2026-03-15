@@ -1,5 +1,7 @@
 package com.example.imageocr;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.documentai.v1.Document;
 import com.google.cloud.documentai.v1.DocumentProcessorServiceClient;
 import com.google.cloud.documentai.v1.DocumentProcessorServiceSettings;
@@ -16,7 +18,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +48,9 @@ public class ReceiptDonutController {
 
      @Value("${google.documentai.processor-id:}")
      private String processorId;
+
+    @Value("${google.application.credentials:${GOOGLE_APPLICATION_CREDENTIALS:my-receipt-api-65cf36b6482b.json}}")
+    private String googleCredentialsPath;
 
     /**
      * Accepts an image/pdf receipt, sends it to Google Document AI Receipt Parser,
@@ -83,12 +93,16 @@ public class ReceiptDonutController {
 
             String endpoint = String.format("%s-documentai.googleapis.com:443", location);
             String processorName = String.format("projects/%s/locations/%s/processors/%s", projectId, location, processorId);
+            Path credentialPath = resolveCredentialPath();
+            GoogleCredentials credentials = loadGoogleCredentials(credentialPath);
 
             logger.info("[Request] Google endpoint={}", endpoint);
             logger.info("[Request] processorName={}", processorName);
+            logger.info("[Request] credentialPath={}", credentialPath);
 
             DocumentProcessorServiceSettings settings = DocumentProcessorServiceSettings.newBuilder()
                 .setEndpoint(endpoint)
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .build();
 
             try (DocumentProcessorServiceClient client = DocumentProcessorServiceClient.create(settings)) {
@@ -115,6 +129,12 @@ public class ReceiptDonutController {
                 return ResponseEntity.ok(payload);
             }
         } catch (IOException e) {
+            String message = e.getMessage() == null ? "" : e.getMessage();
+            if (message.contains("GOOGLE_APPLICATION_CREDENTIALS") || message.contains("credential file")) {
+                logger.error("[Config] Google credentials not configured correctly: {}", message);
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body("Google credentials ยังไม่พร้อมใช้งาน (ตรวจสอบ GOOGLE_APPLICATION_CREDENTIALS)");
+            }
             logger.error("[Request] Failed to read file {}: {}", filename, e.getMessage(), e);
             return ResponseEntity.internalServerError().body("ไม่สามารถอ่านไฟล์ได้: " + e.getMessage());
         } catch (com.google.api.gax.rpc.UnauthenticatedException e) {
@@ -190,5 +210,24 @@ public class ReceiptDonutController {
         payload.put("text", document.getText());
         payload.put("entityCount", document.getEntitiesCount());
         return payload;
+    }
+
+    private Path resolveCredentialPath() {
+        Path credentialPath = Paths.get(googleCredentialsPath);
+        if (!credentialPath.isAbsolute()) {
+            credentialPath = Paths.get(System.getProperty("user.dir")).resolve(credentialPath).normalize();
+        }
+        return credentialPath;
+    }
+
+    private GoogleCredentials loadGoogleCredentials(Path credentialPath) throws IOException {
+        if (!Files.exists(credentialPath)) {
+            throw new IOException("Google credential file not found: " + credentialPath);
+        }
+
+        try (InputStream inputStream = new FileInputStream(credentialPath.toFile())) {
+            return GoogleCredentials.fromStream(inputStream)
+                .createScoped("https://www.googleapis.com/auth/cloud-platform");
+        }
     }
 }

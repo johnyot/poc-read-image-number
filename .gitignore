@@ -57,3 +57,4 @@ config/eng.traineddata
 
 # Local environment secrets
 .env
+my-receipt-api-*.json
