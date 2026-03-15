@@ -9,6 +9,27 @@ curl -X POST http://localhost:8080/api/ocr/numbers \
 
 ## ตัวอย่างวิเคราะห์ใบเสร็จ (Google Document AI)
 
+### ENV Setup (.env)
+
+ไฟล์ `.env` ใช้สำหรับเก็บค่า local และควรถูก ignore จาก git:
+
+```env
+GOOGLE_APPLICATION_CREDENTIALS=C:/path/to/service-account.json
+GOOGLE_PROJECT_ID=your-google-project-id
+GOOGLE_DOCUMENT_AI_LOCATION=us
+GOOGLE_DOCUMENT_AI_PROCESSOR_ID=your-processor-id
+```
+
+โหลดค่า `.env` เข้า PowerShell session ปัจจุบันก่อนรันแอป:
+
+```powershell
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^(?!#)\s*([^=]+)=(.*)$') {
+    [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], 'Process')
+  }
+}
+```
+
 ### ตั้งค่า environment variables (PowerShell)
 
 ```powershell

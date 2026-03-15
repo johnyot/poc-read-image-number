@@ -46,6 +46,35 @@
 
     ผลลัพธ์: JSON ที่มี entities เช่น supplier_name, receipt_date, total_amount, line_item
 
+## ENV Setup
+
+สำหรับ local development ให้ใช้ไฟล์ `.env` (ไฟล์นี้ถูก ignore ด้วย `.gitignore`) โดยอ้างอิงรูปแบบจาก `.env.example`
+
+ตัวอย่างค่าใน `.env`:
+
+- GOOGLE_APPLICATION_CREDENTIALS=C:/path/to/service-account.json
+- GOOGLE_PROJECT_ID=your-google-project-id
+- GOOGLE_DOCUMENT_AI_LOCATION=us
+- GOOGLE_DOCUMENT_AI_PROCESSOR_ID=your-processor-id
+
+PowerShell (โหลด `.env` เข้า environment ของ session ปัจจุบัน):
+
+```powershell
+Get-Content .env | ForEach-Object {
+    if ($_ -match '^(?!#)\s*([^=]+)=(.*)$') {
+        [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], 'Process')
+    }
+}
+```
+
+จากนั้นค่อยรันแอป:
+
+```powershell
+mvn spring-boot:run
+```
+
+หมายเหตุ: Spring Boot ไม่ได้อ่านไฟล์ `.env` อัตโนมัติทุกกรณี ต้องโหลดค่าเข้า environment ก่อนหรือกำหนดผ่าน shell/CI
+
 ## วิธีใช้งาน CLI
 
 1. รันโปรแกรมโดยระบุ path ของไฟล์ภาพ:
