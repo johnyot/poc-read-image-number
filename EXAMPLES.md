@@ -7,6 +7,37 @@ curl -X POST http://localhost:8080/api/ocr/numbers \
   -F "file=@/path/to/your/image.png"
 ```
 
+## ตัวอย่างวิเคราะห์ใบเสร็จ (Google Document AI)
+
+### ตั้งค่า environment variables (PowerShell)
+
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS="C:/path/to/service-account.json"
+$env:GOOGLE_PROJECT_ID="your-google-project-id"
+$env:GOOGLE_DOCUMENT_AI_LOCATION="us"
+$env:GOOGLE_DOCUMENT_AI_PROCESSOR_ID="your-processor-id"
+```
+
+### เรียก API
+
+```sh
+curl -X POST http://localhost:8080/api/receipt/analyze \
+  -F "file=@/path/to/receipt.jpg"
+```
+
+### ตัวอย่างผลลัพธ์
+
+```json
+{
+  "entities": [
+    { "type": "supplier_name", "value": "7-Eleven", "confidence": 0.98 },
+    { "type": "total_amount", "value": "150.00", "confidence": 0.97 }
+  ],
+  "text": "...",
+  "entityCount": 2
+}
+```
+
 ## ตัวอย่าง Postman
 1. Method: POST
 2. URL: `http://localhost:8080/api/ocr/numbers`

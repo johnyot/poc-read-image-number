@@ -54,3 +54,6 @@ Thumbs.db
 # Tesseract config
 /config/
 config/eng.traineddata
+
+# Local environment secrets
+.env

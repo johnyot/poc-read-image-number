@@ -30,6 +30,22 @@
     ถ้าไม่พบตัวเลข: จะได้ string ว่าง
     ถ้าไม่ใช่ไฟล์ภาพ: จะได้ข้อความ "รับเฉพาะไฟล์ภาพเท่านั้น"
 
+6. เรียก API วิเคราะห์ใบเสร็จด้วย Google Document AI:
+
+    POST /api/receipt/analyze (multipart/form-data, field: file)
+
+    ต้องตั้งค่า environment variables ก่อนรัน:
+
+    - GOOGLE_APPLICATION_CREDENTIALS=C:/path/to/service-account.json
+    - GOOGLE_PROJECT_ID=your-google-project-id
+    - GOOGLE_DOCUMENT_AI_LOCATION=us
+    - GOOGLE_DOCUMENT_AI_PROCESSOR_ID=your-processor-id
+
+    ตัวอย่าง curl:
+    curl -X POST http://localhost:8080/api/receipt/analyze -F "file=@/path/to/receipt.jpg"
+
+    ผลลัพธ์: JSON ที่มี entities เช่น supplier_name, receipt_date, total_amount, line_item
+
 ## วิธีใช้งาน CLI
 
 1. รันโปรแกรมโดยระบุ path ของไฟล์ภาพ:
@@ -39,3 +55,4 @@
 ## หมายเหตุ
 - รองรับเฉพาะไฟล์ภาพนามสกุล jpg, jpeg, png, bmp, gif, tiff
 - ต้องติดตั้ง Tesseract OCR ก่อนใช้งานจริง
+- สำหรับ API ใบเสร็จ Google Document AI รองรับ jpg, jpeg, png, bmp, tiff, pdf
